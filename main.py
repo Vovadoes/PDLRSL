@@ -1,6 +1,6 @@
 import math
 
-import scipy
+from scipy.stats import norm
 
 # from Charts import *
 
@@ -18,7 +18,7 @@ class Calculation:
         self.P_out: float = 2 * self.F(E / B_x)
 
     def F(self, x: float) -> float:
-        return scipy.stats.norm.cdf(x) - 0.5
+        return norm.cdf(x) - 0.5
 
 
 if __name__ == "__main__":

@@ -1,1 +1,1 @@
-".venv\Scripts\activate.bat" && pyinstaller --add-data="files;files"  --noconsole UI.py && python create_zip.py && pause
+".venv\Scripts\activate.bat" && pyinstaller --add-data="files;files" UI.py --noconsole && python create_zip.py && pause
