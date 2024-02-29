@@ -357,8 +357,8 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Распределение вероятности длины случайного листа клубники"))
-        self.label_11.setText(_translate("MainWindow", "<html><head/><body><p>Распределение вероятности длины случайного листа клубники</p></body></html>"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Определение доли клубники, длина листьев которых заключена в заданном диапазоне"))
+        self.label_11.setText(_translate("MainWindow", "<html><head/><body><p>Определение доли клубники, длина листьев которых заключена в заданном диапазоне</p></body></html>"))
         self.label_12.setText(_translate("MainWindow", "<html><head/><body><p>Введите среднюю длину листьев садовой клубники:</p></body></html>"))
         self.label_13.setText(_translate("MainWindow", "<html><head/><body><p>M(x)</p></body></html>"))
         self.label_14.setText(_translate("MainWindow", "<html><head/><body><p>=</p></body></html>"))

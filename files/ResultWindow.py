@@ -435,7 +435,7 @@ class Ui_Form(object):
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowTitle(_translate("Form", "Распределение вероятности длины случайного листа клубники"))
+        Form.setWindowTitle(_translate("Form", "Определение доли клубники, длина листьев которых заключена в заданном диапазоне"))
         self.label_8.setText(_translate("Form", "клубники будет находиться в пределах от"))
         self.label_10.setText(_translate("Form", "см"))
         self.label_16.setText(_translate("Form", ", равна"))

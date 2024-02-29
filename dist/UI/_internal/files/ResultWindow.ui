@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Распределение вероятности длины случайного листа клубники</string>
+   <string>Определение доли клубники, длина листьев которых заключена в заданном диапазоне</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
