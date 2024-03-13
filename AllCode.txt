@@ -1,0 +1,623 @@
+----- ChartPLTWindow.py -----
+import sys
+
+import numpy as np
+from PyQt5 import QtWidgets
+
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, \
+    NavigationToolbar2QT as NavigationToolbar
+from matplotlib.figure import Figure
+
+from main import Calculation, ChartLinePltData, ChartQuadRegressPltData
+
+from functions import get_super
+
+
+class ChartPLTWindow(QtWidgets.QDialog):
+
+    def __init__(self, n, *args, **kwargs):
+        super(ChartPLTWindow, self).__init__(*args, **kwargs)
+        self.setWindowTitle(f'График {n}')
+        self.setFixedSize(800, 800)
+
+        fig = Figure()
+        self.axes = fig.add_subplot(111)
+
+        sc = FigureCanvasQTAgg(fig)
+
+        toolbar = NavigationToolbar(sc, self)
+
+        layout = QtWidgets.QGridLayout(self)
+        layout.addWidget(toolbar, 0, 0, 1, 1)
+        layout.addWidget(sc, 1, 0, 1, 1)
+
+
+
+    def line(self, data: ChartLinePltData):
+        self.axes.plot(data.df, marker='o', label=[f"E={i}" for i in data.columns])
+        self.axes.grid(linestyle='--')
+
+        self.axes.set_ylabel(data.xlabel)
+        self.axes.set_xlabel(data.ylabel)
+        self.axes.set_xlim([0, max(data.index) * 1.2])
+        self.axes.set_ylim([0, max(data.df.max()) * 1.2])
+
+    def quad_regress(self, data: ChartQuadRegressPltData):
+        for i in data.columns:
+            model = np.poly1d(np.polyfit(data.df[i].index.tolist(), data.df[i].values.tolist(), 2))
+            polyline = np.linspace(0.1, 1, 50)
+            coefficients = list(model.coefficients)
+            self.axes.plot(
+                polyline, model(polyline), linestyle='dashed', linewidth=2,
+                label=f"{round(coefficients[0], 3)}x{get_super('2')} "
+                      f"{'+' if coefficients[1] > 0 else ''} {round(coefficients[1], 3)}x "
+                      f"{'+' if coefficients[2] > 0 else ''} {round(coefficients[2], 3)}"
+            )
+
+    def start(self):
+        self.axes.legend()
+        self.show()
+        self.exec_()
+
+
+if __name__ == "__main__":
+    d_lst_input = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    E_lst_input = [1, 1.6]
+    calculation = Calculation(d_lst_input=d_lst_input, E_lst_input=E_lst_input)
+    app = QtWidgets.QApplication(sys.argv)
+    chartPlt = ChartPLTWindow(1)
+    chartPlt.line(calculation.chart_v_y_data)
+    chartPlt.quad_regress(calculation.chart_quad_regress_data)
+    chartPlt.start()
+    app.exec_()
+
+
+----- Charts.py -----
+import matplotlib.pyplot as plt
+from pandas import DataFrame
+
+pi = 3.14159265
+Yc = 17.3 * (10 ** -6)
+
+class ChartLinePltData:
+    def __init__(self, n, df: DataFrame, xlabel: str = '', ylabel: str = ''):
+        self.n = n
+        self.columns = df.columns
+        self.index = df.index
+        self.df = df
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+
+
+class ChartQuadRegressPltData:
+    def __init__(self, n, df: DataFrame, linestyle='dashed', linewidth=2):
+        self.n = n
+        self.columns = df.columns
+        self.index = df.index
+        self.df = df
+        self.linestyle = linestyle
+        self.linewidth = linewidth
+        pass
+
+
+class ChartLinePLT:
+    def __init__(self, data: ChartLinePltData, alpha=0.75):
+        plt.figure(data.n)
+        plt.plot(data.df, marker='o', label=[f"E={i}" for i in data.columns], alpha=alpha)
+        plt.grid(linestyle='--')
+        plt.ylabel(data.xlabel)
+        plt.xlabel(data.ylabel)
+        plt.xlim([0, max(data.index) * 1.2])
+        plt.ylim([0, max(data.df.max()) * 1.2])
+
+
+----- create_zip.py -----
+import shutil
+shutil.make_archive('dist/UI', 'zip', 'dist/UI')
+
+----- functions.py -----
+from math import pi
+from Monitor import getMonitors
+from settings import STANDART_DPI
+
+
+
+def get_super(x):
+    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()"
+    super_s = "ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾQᴿˢᵀᵁⱽᵂˣʸᶻᵃᵇᶜᵈᵉᶠᵍʰᶦʲᵏˡᵐⁿᵒᵖ۹ʳˢᵗᵘᵛʷˣʸᶻ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾"
+    res = x.maketrans(''.join(normal), ''.join(super_s))
+    return x.translate(res)
+
+
+def get_sub(x):
+    normal = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=()"
+    sub_s = "ₐ₈CDₑբGₕᵢⱼₖₗₘₙₒₚQᵣₛₜᵤᵥwₓᵧZₐ♭꜀ᑯₑբ₉ₕᵢⱼₖₗₘₙₒₚ૧ᵣₛₜᵤᵥwₓᵧ₂₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎"
+    res = x.maketrans(''.join(normal), ''.join(sub_s))
+    return x.translate(res)
+
+
+def degrees_to_radians(angle: float) -> float:
+    return angle * pi / 180
+
+
+def change_size(window):
+    screen = window.screen()
+    monitors = getMonitors()
+    monitor = monitors[screen.name()]
+    print(screen.name(), monitor.get_max_dpi())
+    k = monitor.get_max_dpi() / STANDART_DPI
+    if k > 1:
+        window.setMinimumSize(round(window.size().width() * k), round(window.size().height() * k))
+        window.setMaximumSize(round(window.size().width() * k), round(window.size().height() * k))
+        window.setBaseSize(round(window.size().width() * k), round(window.size().height() * k))
+
+
+def radians_to_degrees(angle_rad: float) -> float:
+    return angle_rad * 180 / pi
+
+
+----- main.py -----
+import math
+
+from scipy.stats import norm
+
+
+
+
+pi = 3.14159265
+Yc = 17.3 * (10 ** -6)
+
+
+class Calculation:
+    def __init__(self, M_x, B_x, alpha, beta, E):
+        self.P_in: float = self.F((beta - M_x) / B_x) - self.F((alpha - M_x) / B_x)
+        self.P_out: float = 2 * self.F(E / B_x)
+
+    def F(self, x: float) -> float:
+        return norm.cdf(x) - 0.5
+
+
+if __name__ == "__main__":
+    M_x = 7.4
+    B_x = 0.8
+    alpha = 7
+    beta = 8.2
+    E = 0.2
+    calculation = Calculation(M_x, B_x, alpha, beta, E)
+    print(calculation.P_in, calculation.P_out)
+
+
+----- Monitor.py -----
+import ctypes
+import win32api
+from screeninfo import get_monitors
+
+PROCESS_PER_MONITOR_DPI_AWARE = len(get_monitors())
+MDT_EFFECTIVE_DPI = 0
+
+
+def round_custom(num, step):
+    return round(num / step) * step
+
+
+class Monitor:
+    def __init__(self, shcore, monitor):
+        self.shcore = shcore
+        self.monitor = monitor
+        self.dpiX = ctypes.c_uint()
+        self.dpiY = ctypes.c_uint()
+        shcore.GetDpiForMonitor(
+            monitor[0].handle,
+            MDT_EFFECTIVE_DPI,
+            ctypes.byref(self.dpiX),
+            ctypes.byref(self.dpiY)
+        )
+
+    def get_max_dpi(self):
+        return max([round_custom(self.dpiX.value, 25), round_custom(self.dpiY.value, 25)])
+
+
+def getMonitors():
+    dct = {}
+    shcore = ctypes.windll.shcore
+    monitors = win32api.EnumDisplayMonitors()
+    shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
+    for i, monitor in enumerate(monitors):
+        name = win32api.GetMonitorInfo(monitors[i][0])['Device']
+        monitor_obj = Monitor(shcore, monitor)
+        dct[name] = monitor_obj
+        print(
+            f"{name} dpiX: {round_custom(monitor_obj.dpiX.value, 25)}, dpiY: {round_custom(monitor_obj.dpiY.value, 25)}"
+        )
+    return dct
+
+
+----- MyThread.py -----
+from PyQt5.QtCore import QThread
+
+
+class MyThread(QThread):
+    def __init__(self, fun=lambda: None):
+        self.fun = fun
+        super(MyThread, self).__init__()
+
+    def start(self, priority: 'QThread.Priority' = None) -> None:
+        self.fun()
+        super().start()
+        self.exec_()
+        self.quit()
+
+
+----- py_to_txt.py -----
+import os
+
+path = "."
+
+exclude = set(['venv', '.idea', '.venv'])
+lst = []
+for root, d_names, f_names in os.walk(path):
+    d_names[:] = [d for d in d_names if d not in exclude]
+    if len(d_names) != 0:
+        for i in range(len(f_names)):
+            if os.path.splitext(f_names[i])[1] == '.py':
+                lst.append(os.path.join(root, f_names[i]))
+print(lst)
+
+with open('AllCode.txt', 'w+', encoding="UTF-8") as fw:
+    for i in lst:
+        with open(i, 'r', encoding="UTF-8") as fr:
+            name = i.replace('.\\', '').replace('\\', '/')
+            fw.write('-' * 5 + f' {name} ' + '-' * 5)
+            fw.write('\n')
+            arr = fr.read().split('\n')
+            s = ''
+            for i in arr:
+                    s += i + '\n'
+            fw.write(s)
+            fw.write('\n')
+
+
+----- settings.py -----
+DEDUG = True
+
+
+----- Table.py -----
+from typing import Callable
+from typing import List, Any
+
+from PyQt5 import QtWidgets, QtGui
+from files.TableWindow import Ui_Form as Ui_Form_Table
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from UI import mywindow
+
+
+class Table(QtWidgets.QDialog):
+    def __init__(self, base: 'mywindow', n: int, m: int, data: List[List[Any]] = None,
+                 block: bool = False,
+                 heading_x: Callable[[int], str] = lambda iterator: str(iterator),
+                 heading_y: Callable[[int], str] = lambda iterator: str(iterator),
+                 filter_table=lambda dct: round(dct['value'], 5)):
+        super(Table, self).__init__()
+        self.ui = Ui_Form_Table()
+        self.ui.setupUi(self)
+        self.setWindowTitle('Таблица')
+        self.base = base
+        self.block = block
+        self.heading_x = heading_x
+        self.heading_y = heading_y
+        if data is None:
+            data = []
+        self.data = data
+        self.n = n
+        self.m = m
+        self.filter = filter_table
+
+        VerticalHeaderLabels = [self.heading_y(i) for i in range(max(len(self.data), self.m))]
+        HorizontalHeaderLabels = [
+            self.heading_x(i) for i in
+            range(max(len(self.data[0]) if len(self.data) > 0 else self.n, self.n))
+        ]
+        for j in range(min(len(self.data[0]) if len(self.data) > 0 else self.n, self.n)):
+            self.ui.tableWidget.insertColumn(j)
+
+        for i in range(min(len(self.data), self.m)):
+            self.ui.tableWidget.insertRow(i)
+            for j in range(min(len(self.data[0]) if len(self.data) > 0 else self.n, self.n)):
+                self.ui.tableWidget.setItem(
+                    i,
+                    j,
+                    QtWidgets.QTableWidgetItem(
+                        str(self.filter({'i': i, 'j': j, 'value': self.data[i][j]}))
+                    )
+                )
+
+        for j in range(len(self.data[0]) if len(self.data) > 0 else 0, self.n):
+            self.ui.tableWidget.insertColumn(j)
+        for i in range(len(self.data), self.m):
+            self.ui.tableWidget.insertRow(i)
+
+        for i in range(0, self.m):
+            start = len(self.data[0]) if len(self.data) > 0 else 0
+            if len(self.data) <= i < self.m:
+                start = 0
+            for j in range(start, self.n):
+                self.ui.tableWidget.setItem(
+                    i,
+                    j,
+                    QtWidgets.QTableWidgetItem("0.0")
+                )
+        self.ui.tableWidget.setHorizontalHeaderLabels(HorizontalHeaderLabels)
+        self.ui.tableWidget.setVerticalHeaderLabels(VerticalHeaderLabels)
+
+        if self.block:
+            self.ui.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+        self.ui.pushButton.clicked.connect(self.download_table)
+        self.ui.pushButton.clicked.connect(self.close_window)
+
+    def close_window(self):
+        self.close()
+
+    def download_table(self):
+        flag = False
+        self.data = []
+        for i in range(self.m):
+            lst = []
+            for j in range(self.n):
+                try:
+                    lst.append(
+                        float(self.ui.tableWidget.item(i, j).text().replace(",", '.')))
+                    self.ui.tableWidget.item(i, j).setBackground(QtGui.QColor(255, 255, 255))
+                except ValueError:
+                    self.ui.tableWidget.item(i, j).setBackground(QtGui.QColor(255, 0, 0))
+                    flag = True
+            self.data.append(lst)
+        if flag:
+            self.data = []
+        else:
+            self.close()
+        print(self.data)
+
+----- TableLoader.py -----
+from typing import List, Any, TYPE_CHECKING
+from PyQt5.QtWidgets import QLabel
+from Table import Table
+
+if TYPE_CHECKING:
+    from UI import mywindow
+
+
+class TableLoader:
+    def __init__(self, main_window, n: int = 0, m: int = 0, label: QLabel = None,
+                 data: List[List[Any]] = None, **kwargs):
+        self.data = data
+        if data is None:
+            self.data = []
+        self.n = n
+        self.m = m
+        self.main_window: 'mywindow' = main_window
+        self.kwargs = kwargs
+        self.label = label
+
+    def open_table(self):
+        self.main_window.variables.update()
+        tale_window = Table(self.main_window, self.n, self.m, self.data, **self.kwargs)
+        tale_window.show()
+        tale_window.exec_()
+        self.data = tale_window.data
+
+        if self.label:
+            if self.main_window:
+                self.label.setStyleSheet("background-color: lightgreen")
+            else:
+                self.label.setStyleSheet("background-color: red")
+
+    def valid(self, m, n):
+        if len(self.data) == self.m:
+            if len(self.data[0]) == self.n or len(self.data) == 0 == self.n:
+                if self.n == n and self.m == m:
+                    return True
+                else:
+                    self.n = n
+                    self.m = m
+        if self.label:
+            self.label.setStyleSheet("background-color: red")
+        return False
+
+
+----- test.py -----
+
+
+
+def f1(s):
+    lst1 = []
+    lst2 = []
+    lst4 = []
+
+    lst = s.split(', ')
+
+    for i in lst:
+        lst1.append(f"{i}=self.variables.{i},")
+        lst2.append(f"self.{i} = mywindow.is_float(self.main_window.ui.doubleSpinBox)")
+        lst4.append(f"self.{i}=None")
+
+    print()
+    for i in lst4:
+        print(i)
+    print()
+    for i in lst2:
+        print(i)
+    print()
+    for i in lst1:
+        print(i)
+
+
+s = 'M_x, B_x, alpha, beta, E'
+f1(s)
+lst = '''self.M_x = mywindow.is_float(self.main_window.ui.doubleSpinBox_3)
+        self.B_x = mywindow.is_float(self.main_window.ui.doubleSpinBox)
+        self.alpha = mywindow.is_float(self.main_window.ui.doubleSpinBox_5)
+        self.beta = mywindow.is_float(self.main_window.ui.doubleSpinBox_6)
+        self.E = mywindow.is_float(self.main_window.ui.doubleSpinBox_2)'''\
+    .replace('        ', '').replace('(', ')').split('\n')
+
+for i in lst:
+    a = i.split(')')
+
+
+----- UI.py -----
+from typing import Callable
+from typing import List, Any
+
+from PyQt5 import QtWidgets
+
+from files.MainWindow import Ui_MainWindow
+from files.ResultWindow import Ui_Form
+from files.TableWindow import Ui_Form as Ui_Form_Table
+
+from main import Calculation
+from functions import change_size
+from MyThread import MyThread
+from TableLoader import TableLoader
+
+from settings import DEDUG
+
+import sys
+
+
+
+
+class Variables:
+    def __init__(self, main_window):
+        self.main_window: mywindow = main_window
+        self.M_x = None
+        self.B_x = None
+        self.alpha = None
+        self.beta = None
+        self.E = None
+        self.load()
+
+    def load(self):
+        self.M_x = mywindow.is_float(self.main_window.ui.doubleSpinBox_3)
+        self.B_x = mywindow.is_float(self.main_window.ui.doubleSpinBox)
+        self.alpha = mywindow.is_float(self.main_window.ui.doubleSpinBox_5)
+        self.beta = mywindow.is_float(self.main_window.ui.doubleSpinBox_6)
+        self.E = mywindow.is_float(self.main_window.ui.doubleSpinBox_2)
+
+    def update(self):
+        self.load()
+
+
+class mywindow(QtWidgets.QMainWindow):
+
+    def __init__(self):
+        super(mywindow, self).__init__()
+
+        self.calculation = None
+        self.ui = Ui_MainWindow()
+        self.ui.setupUi(self)
+
+        if DEDUG:
+
+        change_size(self)
+
+        self.lst_Thread = []
+
+        self.variables = Variables(self)
+
+
+
+
+        if DEDUG:
+            pass
+
+
+
+        add_def_pushButton = lambda: None
+        self.ui.pushButton.clicked.connect(lambda: self.calculate(add_def_pushButton))
+
+    def calculate(self, fun, *args, **kwargs):
+        self.variables.update()
+        condition = True
+        if condition:
+            self.calculation = Calculation(
+                M_x=self.variables.M_x,
+                B_x=self.variables.B_x,
+                alpha=self.variables.alpha,
+                beta=self.variables.beta,
+                E=self.variables.E,
+            )
+            fun(*args, **kwargs)
+            window = Finish(
+                self
+            )
+            window.show()
+
+            windowThread = MyThread(lambda: window.exec_())
+            windowThread.start()
+            self.lst_Thread.append(windowThread)
+
+    def exec_(self) -> int:
+        a = super().exec_()
+        for i in self.lst_Thread:
+            i.wait()
+        return a
+
+    @staticmethod
+    def is_float(value: QtWidgets.QDoubleSpinBox) -> float:
+        try:
+            a = float(value.value())
+            value.setStyleSheet("QDoubleSpinBox {}")
+            return a
+        except ValueError:
+            value.setStyleSheet("QDoubleSpinBox { background-color: red; }")
+            raise ValueError()
+
+    @staticmethod
+    def is_int(value: QtWidgets.QDoubleSpinBox) -> int:
+        try:
+            a = int(round(float(value.value())))
+            value.setStyleSheet("QDoubleSpinBox {}")
+            return a
+        except ValueError:
+            value.setStyleSheet("QDoubleSpinBox { background-color: red; }")
+            raise ValueError()
+
+
+class Finish(QtWidgets.QDialog):
+    def __init__(self, parent: mywindow):
+        super(Finish, self).__init__()
+        self.ui = Ui_Form()
+        self.parent = parent
+        self.ui.setupUi(self)
+        change_size(self)
+
+        self.ui.doubleSpinBox_2.setValue(round(self.parent.variables.alpha, 3))
+        self.ui.doubleSpinBox_3.setValue(round(self.parent.variables.beta, 3))
+        self.ui.doubleSpinBox.setValue(round(self.parent.calculation.P_in, 4))
+        self.ui.doubleSpinBox_9.setValue(round(self.parent.variables.M_x, 3))
+        self.ui.doubleSpinBox_7.setValue(round(self.parent.variables.E, 3))
+        self.ui.doubleSpinBox_8.setValue(round(self.parent.calculation.P_out, 4))
+
+
+
+
+
+        self.ui.pushButton.clicked.connect(self.exit_w)
+
+    def exit_w(self):
+        self.close()
+
+
+    def view_table(self):
+        pass
+
+
+app = QtWidgets.QApplication([])
+application = mywindow()
+application.show()
+
+sys.exit(app.exec())
+
+
